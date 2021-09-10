@@ -1,0 +1,113 @@
+Projetar o primeiro nome e o último nome dos atores que são diretores;
+Forma (provavelmente) errada:
+
+-- Juntando atores com diretores e atribuindo a variavel A
+A = (actors) ⨝ actors.first_name=directors.first_name ∧ actors.last_name=directors.last_name (directors)
+
+-- Projetando o primeiro nome e o ultimo nome
+π actors.first_name,actors.last_name (A)
+Forma (provavelmente) certa:
+
+-- Renomeando os atributos de diretores e atribuindo a variavel D0
+D0 = ρid ← directors.id, first_name ← directors.first_name, last_name ← directors.last_name (directors)
+
+-- Projetando apenas o primeiro nome e o ultimo nome de diretores em D0 e atribuindo para D1
+D1 = πfirst_name, last_name (D0)
+
+-- Renomeando os atributos de atores e atribuindo a variavel A0
+A0 = ρid ← actors.id, first_name ← actors.first_name, last_name ← actors.last_name (actors)
+
+-- Projetando apenas o primeiro nome e o ultimo nome de atores em A0 e atribuindo para A1
+A1 = πfirst_name, last_name (A0)
+
+-- Realizando a intersecao de atores com diretores
+I = A1 ∩ D1
+
+-- Projetando primeiro nome e ultimo nome dos atores que sao diretores em I
+π first_name,last_name (I)
+Projetar o primeiro nome e o último nome dos atores que não são diretores;
+Forma (provavelmente) errada:
+
+-- Excluindo os atores que sao diretores e atribuindo a variavel A
+A = (actors) ▷ actors.first_name=directors.first_name ∧ actors.last_name=directors.last_name (directors)
+
+-- Projetando o primeiro nome e o ultimo nome
+π actors.first_name, actors.last_name (A)
+Forma (provavelmente) certa:
+
+-- Renomeando os atributos de diretores e atribuindo a variavel D0
+D0 = ρid ← directors.id, first_name ← directors.first_name, last_name ← directors.last_name (directors)
+
+-- Projetando apenas o primeiro nome e o ultimo nome de diretores em D0 e atribuindo para D1
+D1 = πfirst_name, last_name (D0)
+
+-- Renomeando os atributos de atores e atribuindo a variavel A0
+A0 = ρid ← actors.id, first_name ← actors.first_name, last_name ← actors.last_name (actors)
+
+-- Projetando apenas o primeiro nome e o ultimo nome de atores em A0 e atribuindo para A1
+A1 = πfirst_name, last_name (A0)
+
+-- Realizando a subtracao dos atores (A1) por diretores (D1)
+S = A1 - D1
+
+-- Projetando o primeiro nome e o ultimo nome dos atores que nao sao diretores (S)
+π first_name, last_name (S)
+Projetar o primeiro nome e o último nome dos atores e diretores;
+-- Renomeando os atributos de diretores e atribuindo a variavel D0
+D0 = ρid ← directors.id, first_name ← directors.first_name, last_name ← directors.last_name (directors)
+
+-- Projetando apenas o primeiro nome e o ultimo nome de diretores em D0 e atribuindo para D1
+D1 = πfirst_name, last_name (D0)
+
+-- Renomeando os atributos de atores e atribuindo a variavel A0
+A0 = ρid ← actors.id, first_name ← actors.first_name, last_name ← actors.last_name (actors)
+
+-- Projetando apenas o primeiro nome e o ultimo nome de atores em A0 e atribuindo para A1
+A1 = πfirst_name, last_name (A0)
+
+-- Unificando diretores (D1) com atores (A1)
+U = A1 ∪ D1
+
+-- Projetando primeiro nome e ultimo nome de atores e diretores em U
+π first_name, last_name (U)
+Projetar o nome dos filmes que não são dirigidos por nenhum diretor;
+-- Realizando a juncao de filmes com diretores e atribuindo a variavel FD0
+FD0 = (movies) ⨝ movies.id=movies_directors.movie_id  (movies_directors) ⨝ movies_directors.director_id=directors.id (directors)
+
+-- Projetando apenas os nomes, ids, ano e rank dos filmes (de FD0) e atribuindo a FD1
+FD1 = π movies.id, movies.name, movies.year, movies.rank (FD0)
+
+-- Realizando a subtracao dos filmes (movies) pelos filmes com diretores (FD1)
+S = movies - FD1
+
+-- Projetando o nome dos filmes
+π name (S)
+Projetar primeiro nome e o último nome dos atores que não atuaram em pelo menos dois filmes;
+-- Juntando filmes com atores
+FA = (movies) ⨝ movies.id=roles.movie_id (roles) ⨝ actor_id=actors.id (actors)
+
+-- Contando a quantidade de filmes que cada ator participou e adicionando ao FA
+FAC = γ actors.id, actors.first_name, actors.last_name;count(movie_id) -> q_filmes (FA)
+
+-- Selecionando atores que participaram no minimo em doi filmes
+FAC2 = σ q_filmes ≥ 2 (FAC)
+
+-- Realizando a subtracao dos atores (FAC) com os atores que participaram em pelo menos dois filmes (FAC2)
+S = FAC - FAC2
+
+-- Projetando o primeiro nome e o ultimo nome
+π first_name,last_name (S)
+Projetar, por gênero e ano, o número médio de filmes com menos de dois atores atuando.
+-- Juntando filmes com atores
+FA = (movies) ⨝ movies.id=roles.movie_id (roles) ⨝ roles.actor_id=actors.id (actors)
+
+-- Contando a quantidade de atores que cada filme tem
+FC = γ movies.id;count(roles.actor_id) -> q_atores (FA)
+
+-- Selecionando filmes com quantidade de atores menor que dois
+FCm2 = σ q_atores < 2 (FC)
+
+-- Juntando filmes (com menos de dois atores) com generos
+FCm2G = (FCm2) ⨝ movies.id=movies_genres.movie_id (movies_genres)
+
+?
